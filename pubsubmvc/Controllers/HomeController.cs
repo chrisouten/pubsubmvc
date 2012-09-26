@@ -13,11 +13,21 @@ namespace pubsubmvc.Controllers
 		public ActionResult Index()
 		{
 			ViewBag.Message = "Welcome to ASP.NET MVC!";
-			var redisUrl = ConfigurationManager.AppSettings.Get("REDISTOGO_URL");
-			var connectionUri = new Uri(redisUrl);
-			using (var redis = new RedisClient(connectionUri))
+			var enviroment = ConfigurationManager.AppSettings.Get("Environment");
+			RedisClient rc;
+			if (enviroment == "Debug")
 			{
-				redis.Set("hello", "world");
+				rc = new RedisClient();
+			}
+			else
+			{
+				var redisUrl = ConfigurationManager.AppSettings.Get("REDISTOGO_URL");
+				var connectionUri = new Uri(redisUrl);
+				rc = new RedisClient(connectionUri);
+			}
+			using (var redis = rc)
+			{
+				redis.Set("hello", "testing 123");
 				var value = redis.Get<string>("hello");
 				ViewBag.Message = value;
 			}
