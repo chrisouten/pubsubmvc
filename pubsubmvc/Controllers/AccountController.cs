@@ -6,6 +6,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using System.Web.Security;
 using pubsubmvc.Models;
+using pubsubmvc.utils;
 
 namespace pubsubmvc.Controllers
 {
@@ -28,9 +29,14 @@ namespace pubsubmvc.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				if (Membership.ValidateUser(model.UserName, model.Password))
+				RedisUser ru = RedisHelper.LoginUser(model.UserName, model.Password);
+				if (ru == null)
 				{
-					FormsAuthentication.SetAuthCookie(model.UserName, model.RememberMe);
+					ModelState.AddModelError("", "The user name or password provided is incorrect.");
+				}
+				else
+				{
+					FormsAuthentication.SetAuthCookie(model.UserName, false);
 					if (Url.IsLocalUrl(returnUrl) && returnUrl.Length > 1 && returnUrl.StartsWith("/")
 						&& !returnUrl.StartsWith("//") && !returnUrl.StartsWith("/\\"))
 					{
@@ -40,10 +46,6 @@ namespace pubsubmvc.Controllers
 					{
 						return RedirectToAction("Index", "Home");
 					}
-				}
-				else
-				{
-					ModelState.AddModelError("", "The user name or password provided is incorrect.");
 				}
 			}
 
@@ -77,77 +79,20 @@ namespace pubsubmvc.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				// Attempt to register the user
-				MembershipCreateStatus createStatus;
-				Membership.CreateUser(model.UserName, model.Password, model.Email, null, null, true, null, out createStatus);
-
-				if (createStatus == MembershipCreateStatus.Success)
+				RedisUser ru = RedisHelper.RegisterUser(model.UserName, model.Password);
+				if (ru == null)
 				{
-					FormsAuthentication.SetAuthCookie(model.UserName, false /* createPersistentCookie */);
+					ModelState.AddModelError("", "Sorry that username already exists");
+				}
+				else
+				{
+					FormsAuthentication.SetAuthCookie(model.UserName, false);
 					return RedirectToAction("Index", "Home");
 				}
-				else
-				{
-					ModelState.AddModelError("", ErrorCodeToString(createStatus));
-				}
 			}
 
 			// If we got this far, something failed, redisplay form
 			return View(model);
-		}
-
-		//
-		// GET: /Account/ChangePassword
-
-		[Authorize]
-		public ActionResult ChangePassword()
-		{
-			return View();
-		}
-
-		//
-		// POST: /Account/ChangePassword
-
-		[Authorize]
-		[HttpPost]
-		public ActionResult ChangePassword(ChangePasswordModel model)
-		{
-			if (ModelState.IsValid)
-			{
-
-				// ChangePassword will throw an exception rather
-				// than return false in certain failure scenarios.
-				bool changePasswordSucceeded;
-				try
-				{
-					MembershipUser currentUser = Membership.GetUser(User.Identity.Name, true /* userIsOnline */);
-					changePasswordSucceeded = currentUser.ChangePassword(model.OldPassword, model.NewPassword);
-				}
-				catch (Exception)
-				{
-					changePasswordSucceeded = false;
-				}
-
-				if (changePasswordSucceeded)
-				{
-					return RedirectToAction("ChangePasswordSuccess");
-				}
-				else
-				{
-					ModelState.AddModelError("", "The current password is incorrect or the new password is invalid.");
-				}
-			}
-
-			// If we got this far, something failed, redisplay form
-			return View(model);
-		}
-
-		//
-		// GET: /Account/ChangePasswordSuccess
-
-		public ActionResult ChangePasswordSuccess()
-		{
-			return View();
 		}
 
 		#region Status Codes

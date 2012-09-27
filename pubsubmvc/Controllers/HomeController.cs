@@ -5,6 +5,9 @@ using System.Web;
 using System.Web.Mvc;
 using ServiceStack.Redis;
 using System.Configuration;
+using pubsubmvc.utils;
+using System.Threading;
+using pubsubmvc.Models;
 
 namespace pubsubmvc.Controllers
 {
@@ -14,28 +17,40 @@ namespace pubsubmvc.Controllers
 		{
 			ViewBag.Message = "Welcome to ASP.NET MVC!";
 			var enviroment = ConfigurationManager.AppSettings.Get("Environment");
-			RedisClient rc;
-			if (enviroment == "Debug")
-			{
-				rc = new RedisClient();
-			}
-			else
-			{
-				var redisUrl = ConfigurationManager.AppSettings.Get("REDISTOGO_URL");
-				var connectionUri = new Uri(redisUrl);
-				rc = new RedisClient(connectionUri);
-			}
+			RedisClient rc = RedisHelper.GetRedisClient();
 			using (var redis = rc)
 			{
 				redis.Set("hello", "testing 123");
 				var value = redis.Get<string>("hello");
 				ViewBag.Message = value;
 			}
-			
 			return View();
 		}
 
 		public ActionResult About()
+		{
+			RedisClient rc = RedisHelper.GetRedisClient();
+			new Thread(() =>
+				{
+					int x = 0;
+					for (int i = 0; i < 20; i++)
+					{
+						int blah = rc.PublishMessage("bigjob", x.ToString());
+						Thread.Sleep(1000);
+						x++;
+					}
+
+				}).Start();
+			return View();
+		}
+
+		public ActionResult Jobs()
+		{
+			return View();
+		}
+
+		[HttpPost]
+		public ActionResult Jobs(JobModel model)
 		{
 			return View();
 		}
