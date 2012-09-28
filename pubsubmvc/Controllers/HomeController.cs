@@ -8,6 +8,7 @@ using System.Configuration;
 using pubsubmvc.utils;
 using System.Threading;
 using pubsubmvc.Models;
+using System.Web.Script.Serialization;
 
 namespace pubsubmvc.Controllers
 {
@@ -52,7 +53,25 @@ namespace pubsubmvc.Controllers
 		[HttpPost]
 		public ActionResult Jobs(JobModel model)
 		{
-			return View();
+			if (ModelState.IsValid)
+			{
+				RedisClient rc = RedisHelper.GetRedisClient();
+				JavaScriptSerializer s = new JavaScriptSerializer();
+				BigJob job = RedisHelper.CreateBigJob(User.Identity.Name, int.Parse(model.Bigness), model.SKU);
+				new Thread(() =>
+					{
+						int x = 0;
+						for (int i = 0; i < job.Total; i++)
+						{
+							job.Progress++;
+							rc.PublishMessage("bigjob", s.Serialize(job));
+							Thread.Sleep(1000);
+						}
+					}).Start();
+			}
+
+			// If we got this far, something failed, redisplay form
+			return View(model);
 		}
 	}
 }

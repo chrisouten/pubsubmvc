@@ -42,7 +42,7 @@ namespace pubsubmvc.utils
 			return rc.Get<RedisUser>(String.Format("user-{0}", username));
 		}
 
-		public static BigJob CreateBigJob(RedisUser ru, int total, string sku) {
+		public static BigJob CreateBigJob(string ru, int total, string sku) {
 			return new BigJob(ru, total, sku);
 		}
 
@@ -62,12 +62,12 @@ namespace pubsubmvc.utils
 	public class BigJob
 	{
 
-		public RedisUser User { get; set; }
+		public string User { get; set; }
 		public int Progress { get; set; }
 		public int Total { get; set; }
 		public string SKU { get; set; }
 
-		public BigJob(RedisUser user, int total, string SKU)
+		public BigJob(string user, int total, string SKU)
 		{
 			this.User = user;
 			this.Progress = 0;

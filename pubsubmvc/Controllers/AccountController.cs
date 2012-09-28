@@ -87,6 +87,7 @@ namespace pubsubmvc.Controllers
 				else
 				{
 					FormsAuthentication.SetAuthCookie(model.UserName, false);
+					HttpContext.Session.Add("ru", ru);
 					return RedirectToAction("Index", "Home");
 				}
 			}

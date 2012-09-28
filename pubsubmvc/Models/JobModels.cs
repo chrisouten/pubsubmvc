@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Web.Mvc;
 using System.Web.Security;
+using DataAnnotationsExtensions;
 
 namespace pubsubmvc.Models
 {
@@ -14,11 +15,12 @@ namespace pubsubmvc.Models
 		[DataType(DataType.Text)]
 		[Display(Name = "SKU")]
 		public string SKU { get; set; }
-
+		
 		[Required]
-		[DataType(DataType.Text)]
+		[Integer]
+		[Min(1, ErrorMessage="Must be greater than 0")]
 		[Display(Name = "Bigness")]
-		public string NewPassword { get; set; }
+		public string Bigness { get; set; }
 	}
 
 }
