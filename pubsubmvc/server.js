@@ -15,7 +15,6 @@ client.on("message", function (channel, message) {
 client.subscribe("bigjob");
 var app = express.createServer();
 app.listen(process.env.PORT || 80);
-console.log(process.env.PORT);
 
 var io = sio.listen(app);
 
